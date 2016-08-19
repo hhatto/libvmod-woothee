@@ -1,0 +1,12 @@
+[package]
+name = "vmr-woothee"
+version = "0.1.0"
+authors = ["Hideo Hattori <hhatto.jp@gmail.com>"]
+
+[dependencies]
+libc = "0.2"
+woothee = "0.5.0"
+
+[lib]
+name = "woothee"
+crate-type = ["staticlib"]

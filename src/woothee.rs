@@ -19,18 +19,33 @@ pub enum VclEvent {
     Discard,
 }
 
-pub struct vmod_priv {
-    prv: *const Mutex<HashMap<String, c_int>>,
+pub struct vmod_priv<'a> {
+    prv: *const Mutex<VmodWootheeResult<'a>>,
     len: c_int,
     free: *const c_void,
+}
+
+#[repr(C)]
+pub struct vmod_woothee_result {
+    pub name: *const c_char,
+    pub parser: *const c_void,
+}
+
+pub struct VmodWootheeResult<'a> {
+    wparser: parser::Parser<'a>,
+    wresult: parser::WootheeResult<'a>,
 }
 
 #[no_mangle]
 pub extern "C" fn init_function(_: *const c_void, prv: &mut vmod_priv, ev: VclEvent) -> c_int {
     match ev {
         VclEvent::Warm => {
-            let hash = Mutex::new(HashMap::new());
-            prv.prv = Box::into_raw(Box::new(hash));
+            let w = VmodWootheeResult{
+                wparser: parser::Parser::new(),
+                wresult: parser::WootheeResult::new(),
+            };
+            let p = Mutex::new(w);
+            prv.prv = Box::into_raw(Box::new(p));
         }
         VclEvent::Cold => unsafe {
             Box::from_raw(prv);
@@ -58,20 +73,44 @@ pub unsafe extern "C" fn vmod_is_crawler(_: *const c_void, input: *const c_char)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn vmod_parse(_: *const c_void,
-                                    prv: &vmod_priv,
-                                    input: *const c_char)
-                                    -> c_uint {
+pub unsafe extern "C" fn vmod_parser__init(_: *const c_void, result: *mut *const vmod_woothee_result, vcl_name: *const c_char) {
+    //ALLOC_OBJ(result, 0xbbbbbbbb);
+    //AN(result);
+
+    let mut p = parser::Parser::new();
+    let mut p_ptr: *mut c_void = &mut p as *mut _ as *mut c_void;
+    *result = &vmod_woothee_result{name: CString::new("").unwrap().as_ptr(), parser: p_ptr};
+
+    //let ua = conv(input);
+    //match p.parse(ua.as_str()) {
+    //    Some(r) => {
+    //        let c_name = CString::new(r.name).unwrap();
+    //    }
+    //    None => {},
+    //};
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vmod_parser__fini(result: *mut *const vmod_woothee_result) {
+}
+
+
+#[no_mangle]
+pub unsafe extern "C" fn vmod_parser_parse(_: *const c_void, result: *mut vmod_woothee_result, input: *const c_char) {
+    let pparser = (*result).parser;
+    let p: &mut parser::Parser = unsafe { &mut *(pparser as *mut parser::Parser) };
     let ua = conv(input);
-    let p = parser::Parser::new();
 
     match p.parse(ua.as_str()) {
-        Some(result) => {
-            if result.category == "crawler" {
-                return 1;
-            }
-            return 0;
+        Some(r) => {
+            //let c_name = CString::new(r.name).unwrap();
+            //(*result).name = c_name.as_ptr();
         }
-        None => return 0,
-    }
+        None => {},
+    };
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vmod_parser_get_name(_: *const c_void, result: *mut vmod_woothee_result) -> c_char {
+    0
 }

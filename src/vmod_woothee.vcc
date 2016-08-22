@@ -21,9 +21,17 @@ You can even have links and lists in here:
 The init-function declared next does not have documentation.
 
 $Event init_function
-$Function BOOL parse(PRIV_VCL, STRING)
 
-Parse user-agent
+$Object parser()
+Arguments
+Description
+    user-agent parser
+
+$Method VOID .parse(STRING ua)
+Arguments
+    ua: User-Agent string
+
+$Method STRING .get_name()
 
 $Function BOOL is_crawler(STRING)
 

@@ -28,3 +28,8 @@ Parse user-agent
 $Function BOOL is_crawler(STRING)
 
 Check crawler for user-agent
+
+$Function STRING parse_get_name(STRING)
+
+Parse user-agent and get name
+
